@@ -13,7 +13,7 @@ type SkipList struct {
 	randomGenerator rand.Source64
 }
 
-func NewSkipList(maxLevel int, length int, probability float64, randomGenerator rand.Source64) *SkipList {
+func NewSkipList(maxLevel int, probability float64, randomGenerator rand.Source64) *SkipList {
 	if probability >= 1 {
 		panic("invalid probability")
 	}
@@ -21,6 +21,14 @@ func NewSkipList(maxLevel int, length int, probability float64, randomGenerator 
 	probabilityList[0] = 1
 	for i := 1; i < maxLevel; i++ {
 		probabilityList[i] = probabilityList[i-1] * probability
+	}
+
+	return &SkipList{
+		maxLevel:        maxLevel,
+		length:          0,
+		probability:     probability,
+		probabilityList: probabilityList,
+		randomGenerator: randomGenerator,
 	}
 
 }
