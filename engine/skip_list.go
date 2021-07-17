@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"math"
+	"bytes"
 	"math/rand"
 )
 
@@ -10,10 +10,20 @@ type SkipList struct {
 	length          int
 	probability     float64
 	probabilityList []float64
-	randomGenerator rand.Source64
+	randomGenerator rand.Source
+	head            []*node
+	previousCache   []*node //每一行key比当前key小的node, 插入时使用
 }
 
-func NewSkipList(maxLevel int, probability float64, randomGenerator rand.Source64) *SkipList {
+type node struct {
+	key   []byte
+	value interface{}
+	next  *node
+	pre   *node
+	down  *node
+}
+
+func NewSkipList(maxLevel int, probability float64, randomGenerator rand.Source) *SkipList {
 	if probability >= 1 {
 		panic("invalid probability")
 	}
@@ -29,30 +39,57 @@ func NewSkipList(maxLevel int, probability float64, randomGenerator rand.Source6
 		probability:     probability,
 		probabilityList: probabilityList,
 		randomGenerator: randomGenerator,
+		head:            make([]*node, maxLevel),
+		previousCache:   make([]*node, maxLevel),
 	}
-
 }
 
-func (sl *SkipList) Set(key string, value interface{}) error {
+func NewDefaultSkipList() *SkipList {
+	return NewSkipList(20, float64(1)/3, rand.NewSource(rand.Int63()))
+}
+
+// randomLevel return level in [0, maxLevel)
+func (sl *SkipList) randomLevel() (level int) {
+	r := float64(sl.randomGenerator.Int63()) / (1 << 63)
+
+	level = 1
+	for level < sl.maxLevel && r < sl.probabilityList[level] {
+		level++
+	}
+	return level - 1
+}
+
+func (sl *SkipList) previousNodes(key []byte) []*node {
+	cache := sl.previousCache
+	prev := sl.head[sl.maxLevel-1] //prev.key是当前level中小于key的最大的key
+	now := prev.next
+	for i := sl.maxLevel - 1; i >= 0; i-- {
+		for now != nil && bytes.Compare(key, now.key) > 0 {
+			prev = now
+			now = now.next
+		}
+		cache[i] = prev
+		prev = prev.down
+		now = prev.next
+	}
+	return cache
+}
+
+func (sl *SkipList) Set(key []byte, value interface{}) error {
+	level := sl.randomLevel()
+
+	for i := 0; i < level; i++ {
+
+	}
 
 	return nil
 }
 
-func (sl *SkipList) Get(key string) (interface{}, error) {
+func (sl *SkipList) Get(key []byte) (interface{}, error) {
 
 	return nil, nil
 }
 
-func (sl *SkipList) GetRange(begin, end string) ([]interface{}, error) {
+func (sl *SkipList) GetRange(begin, end *[]byte) ([]interface{}, error) {
 	return nil, nil
-}
-
-func (t *SkipList) randomLevel() (level int) {
-	r := float64(t.randomGenerator.Uint64()) / math.MaxUint64
-
-	level = 1
-	for level < t.maxLevel && r < t.probabilityList[level] {
-		level++
-	}
-	return
 }
