@@ -1,0 +1,13 @@
+goos: linux
+goarch: amd64
+pkg: kiDB/engine
+cpu: AMD Ryzen 7 5800H with Radeon Graphics
+BenchmarkSkipListSet
+BenchmarkSkipListSet-16    	  104002	     12093 ns/op	    5540 B/op	       7 allocs/op
+
+goos: linux
+goarch: amd64
+pkg: kiDB/engine
+cpu: AMD Ryzen 7 5800H with Radeon Graphics
+BenchmarkSkipListGet
+BenchmarkSkipListGet-16    	 7975303	       155.3 ns/op	       0 B/op	       0 allocs/op

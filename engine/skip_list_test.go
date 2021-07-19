@@ -99,29 +99,33 @@ func TestSkipList(t *testing.T) {
 }
 
 func BenchmarkSkipListSet(b *testing.B) {
-	sl := NewSkipList(30, 0.5, rand.NewSource(time.Now().UnixNano()))
+	b.StopTimer()
+	sl := NewDefaultSkipList()
+	cnt := 1000000
+	for i := 0; i < cnt; i++ {
+		sl.Set([]byte(utils.RandomAlphaString(10)), 1)
+	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		sl.Set([]byte(utils.RandomAlphaString(10)), rand.Int())
+		sl.Set([]byte(utils.RandomAlphaString(10)), 1)
 	}
-	b.StopTimer()
 }
 
 func BenchmarkSkipListGet(b *testing.B) {
-	sl := NewDefaultSkipList()
-	a := make(map[string]int, b.N)
-	cnt := 100000
-	for i := 0; i < cnt; i++ {
-		a[utils.RandomString(10)] = rand.Int()
-	}
-	for k, v := range a {
-		sl.Set([]byte(k), v)
-	}
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		sl.Get([]byte("123"))
-	}
 	b.StopTimer()
+	sl := NewDefaultSkipList()
+	cnt := 1000000
+	for i := 0; i < cnt; i++ {
+		sl.Set([]byte(utils.RandomString(10)), struct{}{})
+	}
+	k := []byte(utils.RandomString(10))
+	v := 1
+	sl.Set(k, v)
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		sl.Get(k)
+	}
 }
 
 /*
