@@ -139,12 +139,29 @@ func (sl *SkipList) Get(key []byte) Iterator {
 	for now != nil && bytes.Compare(now.key, key) < 0 {
 		now = now.next
 	}
-	if now != nil && bytes.Equal(now.key, key) {
-		return now
-	}
-	return nil
+	return now
 }
 
 func (sl *SkipList) GetRange(left, right []byte) (begin Iterator, end Iterator) {
-	return
+	begin = sl.Get(left)
+	if begin == nil {
+		end = nil
+		return begin, end
+	}
+	now := begin
+	for now != nil && bytes.Compare(now.Key(), right) < 0 {
+		now = now.Next()
+	}
+	if now != nil && bytes.Compare(now.Key(), right) > 0 {
+		end = now
+	}else if now != nil && bytes.Equal(now.Key(), right) {
+		if now.Next() != nil {
+			end = now.Next()
+		}else {
+			end = nil
+		}
+	}else {
+		end = nil
+	}
+	return begin, end
 }
