@@ -145,6 +145,6 @@ func (sl *SkipList) Get(key []byte) Iterator {
 	return nil
 }
 
-func (sl *SkipList) GetRange(left, right *[]byte) (begin Iterator, end Iterator) {
+func (sl *SkipList) GetRange(left, right []byte) (begin Iterator, end Iterator) {
 	return
 }
