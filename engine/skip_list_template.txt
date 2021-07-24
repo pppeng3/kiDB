@@ -17,7 +17,7 @@ type SkipList struct {
 
 type Node struct {
 	key   []byte
-	value []byte
+	value interface{}
 	next  *Node
 	prev  *Node // 只在level0使用
 	down  *Node
@@ -31,7 +31,7 @@ func (n *Node) Prev() *Node {
 	return n.prev
 }
 
-func (n *Node) Value() []byte {
+func (n *Node) Value() interface{} {
 	return n.value
 }
 
@@ -98,7 +98,7 @@ func (sl *SkipList) previousNodes(key []byte) []*Node {
 	return cache
 }
 
-func (sl *SkipList) Set(key []byte, value []byte) *Node {
+func (sl *SkipList) Set(key []byte, value interface{}) *Node {
 	prevs := sl.previousNodes(key)
 	if nxt := prevs[0].next; nxt != nil && bytes.Equal(nxt.key, key) {
 		//存在，直接修改value

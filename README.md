@@ -11,3 +11,5 @@
   + 存储的是指令而不是值，这样才能支持删除操作的持久化
     + 暂定格式{key, value, operation}, operation可以是insert或delete。
     + 删除key时插入一条{key, value, delete}
+## 思考
++ valude的类型感觉不能用interface，因为序列化的时候一定会涉及到转换为具体类型

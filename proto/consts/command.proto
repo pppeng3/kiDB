@@ -1,0 +1,10 @@
+syntax = "proto3";
+package kiDB;
+
+import "proto/consts/consts.proto";
+message Command{
+    Operation operation = 1;
+    DataType data_type = 2;
+    bytes key = 3;
+    bytes value = 4;
+}

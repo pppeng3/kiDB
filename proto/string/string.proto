@@ -1,0 +1,8 @@
+syntax = "proto3";
+package kiDB_string;
+
+
+message String{
+    int32 length = 1; //count of strings
+    repeated bytes values = 2;
+}

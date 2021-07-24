@@ -1,14 +1,4 @@
-package consts
-
-type DataType uint8
-
-const (
-	String DataType = iota
-	List
-	HashMap
-	HashSet
-	ZSet
-)
+package datastructure
 
 // Serializable Each datastructure has to implement this interface for serializing to hard disk
 type Serializable interface {
