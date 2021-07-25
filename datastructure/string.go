@@ -18,7 +18,7 @@ func Set(key, value string) bool {
 		Operation: kiDB.Operation_insert,
 		DataType:  kiDB.DataType_string,
 		Key:       utils.Str2bytes(key),
-		Value:     utils.Str2bytes(key),
+		Value:     utils.Str2bytes(value),
 	}
 	b, _ := proto.Marshal(cmd)
 	Engine.Set([]byte(key), b)
@@ -62,7 +62,7 @@ func trivialize() [][]byte {
 func ToProtoBufString() *kiDB_string.String {
 	b := trivialize()
 	return &kiDB_string.String{
-		Length: int32(len(b)),
+		Length: uint32(len(b)),
 		Values: b,
 	}
 }
