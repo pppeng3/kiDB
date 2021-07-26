@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"kiDB/consts"
 	"math/rand"
 )
 
@@ -17,7 +18,7 @@ type SkipList struct {
 
 type Node struct {
 	key   []byte
-	value []byte
+	value *consts.Command
 	next  *Node
 	prev  *Node // 只在level0使用
 	down  *Node
@@ -31,7 +32,7 @@ func (n *Node) Prev() *Node {
 	return n.prev
 }
 
-func (n *Node) Value() []byte {
+func (n *Node) Value() *consts.Command {
 	return n.value
 }
 
@@ -98,7 +99,7 @@ func (sl *SkipList) previousNodes(key []byte) []*Node {
 	return cache
 }
 
-func (sl *SkipList) Set(key []byte, value []byte) *Node {
+func (sl *SkipList) Set(key []byte, value *consts.Command) *Node {
 	prevs := sl.previousNodes(key)
 	if nxt := prevs[0].next; nxt != nil && bytes.Equal(nxt.key, key) {
 		//存在，直接修改value

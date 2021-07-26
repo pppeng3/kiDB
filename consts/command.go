@@ -44,6 +44,6 @@ func (c *Command) Serialize() ([]byte, error) {
 	return buf, nil
 }
 
-func DeSerialize(buf []byte) (*Command) {
-	
+func DeSerialize(buf []byte) *Command {
+	return nil
 }

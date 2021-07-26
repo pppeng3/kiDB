@@ -2,7 +2,10 @@ package datastructure
 
 import (
 	"bytes"
+	"kiDB/consts"
 	"kiDB/engine"
+
+	"github.com/prometheus/common/log"
 )
 
 type String struct {
@@ -10,23 +13,34 @@ type String struct {
 }
 
 func (s *String) Set(key, value []byte) bool {
-	s.engine.Set(key, value)
+	command := &consts.Command{
+		OperationType: consts.Operation_Insert,
+		DataType:      consts.String,
+		KeySize:       uint32(len(key)),
+		ValueSize:     uint32(len(value)),
+		Key:           key,
+		Value:         value,
+	}
+
+	s.engine.Set(key, command)
 	return true
 }
 
-func (s *String) Get(key []byte) ([]byte, bool) {
+func (s *String) Get(key []byte) ([]byte, bool) {//todo
 	node := s.engine.Get(key)
 	if node == nil || bytes.Equal(node.Key(), key) {
 		return nil, false
 	}
-	return node.Value(), true
+	b := node.Value()
+	command := consts.DeSerialize(b)
+	return command.Value, true
 }
 
-func (s *String) Delete(key []byte) bool {
+func (s *String) Delete(key []byte) bool {//todo
 	return s.engine.Delete(key)
 }
 
-func (s *String) Trivialize() (keys, values [][]byte) {
+func (s *String) Trivialize() (keys, values [][]byte) {//todo
 	keys = make([][]byte, 0, s.engine.Size())
 	values = make([][]byte, 0, s.engine.Size())
 
