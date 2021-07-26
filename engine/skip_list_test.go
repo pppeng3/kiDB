@@ -2,9 +2,10 @@ package engine
 
 import (
 	"bytes"
+	"kiDB/utils"
 	"testing"
 
-	"kiDB/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSkipList(t *testing.T) {
@@ -56,4 +57,17 @@ func BenchmarkSkipListGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		sl.Get(k)
 	}
+}
+
+func TestSkipList_Delete(t *testing.T) {
+	sl := NewDefaultSkipList()
+	sl.Set([]byte("1"), []byte("1"))
+	sl.Set([]byte("2"), []byte("2"))
+	sl.Set([]byte("3"), []byte("3"))
+	ret := sl.Delete([]byte("3"))
+	assert.Equal(t, ret, true)
+	node := sl.Get([]byte("3"))
+	assert.Equal(t, node, (*Node)(nil))
+	ret = sl.Delete([]byte("4"))
+	assert.Equal(t, ret, false)
 }

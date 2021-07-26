@@ -139,14 +139,23 @@ func (sl *SkipList) Get(key []byte) *Node {
 	for now != nil && bytes.Compare(now.key, key) < 0 {
 		now = now.next
 	}
-	if now != nil && bytes.Equal(now.key, key) {
-		return now
-	}
-	return nil
+	return now
 }
 
 func (sl *SkipList) GetRange(left, right []byte) (begin *Node, end *Node) {
 	return
+}
+
+func (sl *SkipList) Delete(key []byte) bool {
+	var ret bool
+	nodes := sl.previousNodes(key)
+	for _, node := range nodes {
+		if node.next != nil && bytes.Equal(node.next.key, key) {
+			node.next = node.next.next
+			ret = true
+		}
+	}
+	return ret
 }
 
 func (sl *SkipList) Begin() *Node {

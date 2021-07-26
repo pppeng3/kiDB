@@ -1,68 +1,64 @@
 package datastructure
 
 import (
+	"bytes"
 	"kiDB/engine"
-	kiDB "kiDB/proto/consts"
-	kiDB_string "kiDB/proto/string"
-	"kiDB/utils"
-
-	"google.golang.org/protobuf/proto"
 )
 
-var (
-	Engine = engine.NewDefaultSkipList() //string全存到一个跳表里
-)
+type String struct {
+	engine *engine.SkipList //string全存到一个跳表里
+}
 
-func Set(key, value string) bool {
-	cmd := &kiDB.Command{
-		Operation: kiDB.Operation_insert,
-		DataType:  kiDB.DataType_string,
-		Key:       utils.Str2bytes(key),
-		Value:     utils.Str2bytes(value),
-	}
-	b, _ := proto.Marshal(cmd)
-	Engine.Set([]byte(key), b)
+func (s *String) Set(key, value []byte) bool {
+	s.engine.Set(key, value)
 	return true
 }
 
-func Get(key string) (string, bool) {
-	it := Engine.Get([]byte(key))
-	if it == nil {
-		// not found
-		return "", false
+func (s *String) Get(key []byte) ([]byte, bool) {
+	node := s.engine.Get(key)
+	if node == nil || bytes.Equal(node.Key(), key) {
+		return nil, false
 	}
-	cmd := &kiDB.Command{}
-	proto.Unmarshal(it.Value(), cmd)
-	if cmd.Operation == kiDB.Operation_delete {
-		// found but has been deleted
-		return "", false
-	}
-
-	return utils.Bytes2str(cmd.Value), true
+	return node.Value(), true
 }
 
-// func Delete(key string) bool {
-// 	//todo 原地修改减少内存分配
-// 	Engine.Set([]byte(key), &kiDB.Command{
-// 		Operation: kiDB.Operation_delete,
-// 		Key:       []byte(key),
-// 		Value:     nil,
-// 	})
-// 	return true
+func (s *String) Delete(key []byte) bool {
+	return s.engine.Delete(key)
+}
+
+func (s *String) Trivialize() (keys, values [][]byte) {
+	keys = make([][]byte, 0, s.engine.Size())
+	values = make([][]byte, 0, s.engine.Size())
+
+	for it := s.engine.Begin(); it != nil; it = it.Next() {
+		keys = append(keys, it.Key())
+		values = append(values, it.Value())
+	}
+	return
+}
+
+// func (s *String) Serialize() []byte {
+// 	keys, values := s.Trivialize()
+// 	// size := 0
+// 	var k, v []byte
+// 	for i, _ := range keys {
+// 		k = keys[i]
+// 		v = values[i]
+
+// 		c := consts.Command{
+// 		OperationType: inser,
+// 		DataType:      0,
+// 		KeySize:       0,
+// 		ValueSize:     0,
+// 		Key:           []byte{},
+// 		Value:         []byte{},
+// 	}
+// 	}
+
 // }
-
-func trivialize() [][]byte {
-	res := make([][]byte, 0, Engine.Size())
-	for it := Engine.Begin(); it != nil; it = it.Next() {
-		res = append(res, it.Value())
-	}
-	return res
-}
-
-func ToProtoBufString() *kiDB_string.String {
-	b := trivialize()
-	return &kiDB_string.String{
-		Length: uint32(len(b)),
-		Values: b,
-	}
-}
+/*
+LSM只有append操作
+硬盘里有key1
+内存中调用了Delete(key1), 如果Delete方法直接在内存中删除了key1,硬盘里的数据无法得到更新
+如果硬盘里存的是command{opType:insert, dataType:string, key: key1}, 且调用Delete(key1)时插入一条command{opType:delete, dataType:string, key: key1},sstable合并的过程中会把硬盘中的key1删除
+*/
