@@ -2,14 +2,19 @@ package datastructure
 
 import (
 	"bytes"
+	"encoding/binary"
 	"kiDB/consts"
 	"kiDB/engine"
-
-	"github.com/prometheus/common/log"
 )
 
 type String struct {
 	engine *engine.SkipList //string全存到一个跳表里
+}
+
+func NewString() *String {
+	return &String{
+		engine.NewDefaultSkipList(),
+	}
 }
 
 func (s *String) Set(key, value []byte) bool {
@@ -26,50 +31,56 @@ func (s *String) Set(key, value []byte) bool {
 	return true
 }
 
-func (s *String) Get(key []byte) ([]byte, bool) {//todo
+func (s *String) Get(key []byte) ([]byte, bool) { //todo
 	node := s.engine.Get(key)
-	if node == nil || bytes.Equal(node.Key(), key) {
+	if node == nil || !bytes.Equal(node.Key(), key) {
 		return nil, false
 	}
-	b := node.Value()
-	command := consts.DeSerialize(b)
-	return command.Value, true
+
+	return node.Value().Value, true
 }
 
-func (s *String) Delete(key []byte) bool {//todo
-	return s.engine.Delete(key)
+func (s *String) Delete(key []byte) bool { //todo
+	node := s.engine.Get(key)
+	if node == nil || !bytes.Equal(node.Key(), key) {
+		return false
+	}
+
+	//直接修改
+	command := node.Value()
+	command.OperationType = consts.Operation_Delete
+	command.Value = nil
+	command.ValueSize = 0
+
+	return true
 }
 
-func (s *String) Trivialize() (keys, values [][]byte) {//todo
-	keys = make([][]byte, 0, s.engine.Size())
-	values = make([][]byte, 0, s.engine.Size())
-
+func (s *String) Trivialize() (commands []*consts.Command, size uint32) { //todo
+	commands = make([]*consts.Command, 0, s.engine.Size())
+	var cmd *consts.Command
 	for it := s.engine.Begin(); it != nil; it = it.Next() {
-		keys = append(keys, it.Key())
-		values = append(values, it.Value())
+		cmd = it.Value()
+		commands = append(commands, cmd)
+		size += cmd.Size() + 4
 	}
 	return
 }
 
-// func (s *String) Serialize() []byte {
-// 	keys, values := s.Trivialize()
-// 	// size := 0
-// 	var k, v []byte
-// 	for i, _ := range keys {
-// 		k = keys[i]
-// 		v = values[i]
+func (s *String) Serialize() []byte {
+	cmds, size := s.Trivialize()
+	size += 4
+	buf := make([]byte, size)
+	binary.BigEndian.PutUint32(buf[0:4], uint32(len(cmds)))
+	offset := 4
+	for _, c := range cmds {
+		binary.BigEndian.PutUint32(buf[offset:offset+4], c.Size())
+		offset += 4
+		copy(buf[offset:offset+int(c.Size())], c.Serialize())
+		offset += int(c.Size())
+	}
+	return buf
+}
 
-// 		c := consts.Command{
-// 		OperationType: inser,
-// 		DataType:      0,
-// 		KeySize:       0,
-// 		ValueSize:     0,
-// 		Key:           []byte{},
-// 		Value:         []byte{},
-// 	}
-// 	}
-
-// }
 /*
 LSM只有append操作
 硬盘里有key1

@@ -2,7 +2,6 @@ package consts
 
 import (
 	"encoding/binary"
-	"errors"
 )
 
 type OperationType uint8
@@ -22,26 +21,28 @@ type Command struct {
 }
 
 func (c *Command) Size() uint32 {
-	return 12 + c.KeySize + c.ValueSize
+	return 10 + c.KeySize + c.ValueSize
 }
 
 func (c *Command) Types() uint16 {
 	return uint16(uint8(c.OperationType)<<8 | uint8(c.DataType))
 }
 
-func (c *Command) Serialize() ([]byte, error) {
-	if c == nil || len(c.Key) == 0 {
-		return nil, errors.New("empty command")
-	}
-
+func (c *Command) Serialize() []byte {
+	// if c == nil || len(c.Key) == 0 {
+	// 	return nil, errors.New("empty command")
+	// }
+	// if time.Now().Unix()%2 == 0 {
+	// 	b, _ := json.Marshal(c)
+	// 	return b
+	// }
 	buf := make([]byte, c.Size())
 	binary.BigEndian.PutUint16(buf[0:2], c.Types())
 	binary.BigEndian.PutUint32(buf[2:6], c.KeySize)
 	binary.BigEndian.PutUint32(buf[6:10], c.ValueSize)
 	copy(buf[10:10+c.KeySize], c.Key)
 	copy(buf[10+c.KeySize:10+c.KeySize+c.ValueSize], c.Value)
-
-	return buf, nil
+	return buf
 }
 
 func DeSerialize(buf []byte) *Command {
