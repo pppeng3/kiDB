@@ -20,31 +20,33 @@ type Command struct {
 	Value         []byte
 }
 
-func (c *Command) Size() uint32 {
-	return 10 + c.KeySize + c.ValueSize
-}
+//Size OperationType DataType and ValueSize(without Keysize)
 
 func (c *Command) Types() uint16 {
 	return uint16(uint8(c.OperationType)<<8 | uint8(c.DataType))
 }
 
-func (c *Command) Serialize() []byte {
-	// if c == nil || len(c.Key) == 0 {
-	// 	return nil, errors.New("empty command")
-	// }
-	// if time.Now().Unix()%2 == 0 {
-	// 	b, _ := json.Marshal(c)
-	// 	return b
-	// }
-	buf := make([]byte, c.Size())
-	binary.BigEndian.PutUint16(buf[0:2], c.Types())
-	binary.BigEndian.PutUint32(buf[2:6], c.KeySize)
-	binary.BigEndian.PutUint32(buf[6:10], c.ValueSize)
-	copy(buf[10:10+c.KeySize], c.Key)
-	copy(buf[10+c.KeySize:10+c.KeySize+c.ValueSize], c.Value)
-	return buf
+func (c *Command) Size() uint32 {
+	return 6 + c.ValueSize
 }
 
+func (c *Command) Serialize() []byte {
+	buf := make([]byte, c.Size())
+	binary.BigEndian.PutUint16(buf[0:2], c.Types())
+	binary.BigEndian.PutUint32(buf[2:6], c.ValueSize)
+	copy(buf[6:6+c.ValueSize], c.Value)
+	return buf
+}
 func DeSerialize(buf []byte) *Command {
-	return nil
+	cmd := &Command{}
+	types := binary.BigEndian.Uint16(buf[0:2])
+	cmd.OperationType = OperationType(types >> 8)
+	cmd.DataType = DataType(types & 0x00ff)
+	cmd.ValueSize = binary.BigEndian.Uint32(buf[2:6])
+	cmd.Value = make([]byte, cmd.ValueSize)
+	copy(cmd.Value, buf[6:6+cmd.ValueSize])
+	if int(cmd.ValueSize) != len(cmd.Value) {
+		panic("value size mismatch")
+	}
+	return cmd
 }
