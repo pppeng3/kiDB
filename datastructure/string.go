@@ -101,6 +101,7 @@ func (s *String) Serialize() []byte {
 	return buf
 }
 
+//TODO: DeSerialize
 /*
 LSM只有append操作
 硬盘里有key1
