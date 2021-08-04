@@ -55,32 +55,53 @@ func (s *String) Delete(key []byte) bool { //todo
 	return true
 }
 
-func (s *String) Trivialize() (commands []*consts.Command, size uint32) { //todo
+func (s *String) Trivialize() (commands []*consts.Command) { //todo
 	commands = make([]*consts.Command, 0, s.engine.Size())
 	var cmd *consts.Command
 	for it := s.engine.Begin(); it != nil; it = it.Next() {
 		cmd = it.Value()
 		commands = append(commands, cmd)
-		size += cmd.Size() + 4
 	}
 	return
 }
 
 func (s *String) Serialize() []byte {
-	cmds, size := s.Trivialize()
-	size += 4
-	buf := make([]byte, size)
-	binary.BigEndian.PutUint32(buf[0:4], uint32(len(cmds)))
-	offset := 4
-	for _, c := range cmds {
-		binary.BigEndian.PutUint32(buf[offset:offset+4], c.Size())
+	cmds := s.Trivialize()
+	num := len(cmds)
+	keys := make([][]byte, 0, num)
+	keySizeSum := 0
+	for _, cmd := range cmds {
+		keys = append(keys, cmd.Key)
+		keySizeSum += len(cmd.Key) + int(cmd.Size())
+	}
+	buf := make([]byte, 4+8*len(keys)+keySizeSum)
+	offset := 0
+	binary.BigEndian.PutUint32(buf[offset:offset+4], uint32(num))
+	offset += 4
+	preSumKey := uint32(0) //keySize的前缀和
+	for i := 0; i < num; i++ {
+		preSumKey += uint32(len(keys[i]))
+		binary.BigEndian.PutUint32(buf[offset:offset+4], preSumKey)
 		offset += 4
-		copy(buf[offset:offset+int(c.Size())], c.Serialize())
-		offset += int(c.Size())
+	}
+	for i := 0; i < num; i++ {
+		copy(buf[offset:offset+len(keys[i])], keys[i])
+		offset += len(keys[i])
+	}
+	preSumCmd := uint32(0) //cmdSize的前缀和
+	for i := 0; i < num; i++ {
+		preSumCmd += uint32(cmds[i].Size())
+		binary.BigEndian.PutUint32(buf[offset:offset+4], preSumCmd)
+		offset += 4
+	}
+	for i := 0; i < num; i++ {
+		copy(buf[offset:offset+int(cmds[i].Size())], cmds[i].Serialize())
+		offset += int(cmds[i].Size())
 	}
 	return buf
 }
 
+//TODO: DeSerialize
 /*
 LSM只有append操作
 硬盘里有key1
